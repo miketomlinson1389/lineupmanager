@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nebraska Storm — Lineup Manager</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<style>
+  :root {
+    --bg: #f3f6f3;
+    --surface: #ffffff;
+    --surface-2: #eef3ee;
+    --border: rgba(0,0,0,0.14);
+    --border-strong: rgba(0,0,0,0.24);
+    --text: #16261c;
+    --text-2: #4a5a4f;
+    --text-3: #7d8a80;
+    --storm-green: #1b6b3a;
+    --storm-green-dk: #11502b;
+    --storm-gold: #f5c400;
+    --storm-gold-dk: #8a6d00;
+    --teal: #1b6b3a;
+    --teal-bg: #e3f0e7;
+    --coral: #9a3412;
+    --coral-bg: #fbeae1;
+    --amber: #8a6d00;
+    --amber-bg: #fdf3cf;
+    --blue: #185fa5;
+    --blue-bg: #e6f1fb;
+    --purple: #8a6d00;
+    --purple-bg: #fdf3cf;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 20px 16px 80px; }
+  header.app {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 16px;
+    background: var(--storm-green); color: #fff;
+    padding: 16px 20px; border-radius: var(--radius-lg);
+    border-bottom: 4px solid var(--storm-gold);
+  }
+  header.app h1 { font-size: 22px; font-weight: 600; margin: 0; color: #fff; letter-spacing: 0.01em; }
+  header.app h1 .bolt { color: var(--storm-gold); }
+  header.app .sub { color: #cfe6d6; font-size: 13px; margin-top: 2px; }
+  .tabs { display: flex; gap: 4px; background: rgba(255,255,255,0.15); padding: 4px; border-radius: var(--radius); flex-wrap: wrap; }
+  .tab {
+    border: none; background: transparent; padding: 8px 14px; border-radius: 6px;
+    font-size: 14px; font-weight: 500; color: #e4f1e8; cursor: pointer; font-family: var(--font);
+  }
+  .tab.active { background: var(--storm-gold); color: #3a2e00; box-shadow: 0 1px 2px rgba(0,0,0,0.15); }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .card {
+    background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg);
+    padding: 16px 18px; margin-bottom: 16px;
+  }
+  .card h2 { font-size: 17px; font-weight: 600; margin: 0 0 4px; }
+  .card .hint { color: var(--text-2); font-size: 13px; margin: 0 0 14px; }
+  button.btn {
+    border: 0.5px solid var(--border-strong); background: var(--surface); color: var(--text);
+    padding: 8px 14px; border-radius: var(--radius); font-size: 14px; font-weight: 500;
+    cursor: pointer; font-family: var(--font); transition: background 0.12s;
+  }
+  button.btn:hover { background: var(--surface-2); }
+  button.btn:active { transform: scale(0.98); }
+  button.btn.primary { background: var(--storm-green); color: #fff; border-color: var(--storm-green); }
+  button.btn.primary:hover { background: var(--storm-green-dk); }
+  button.btn.danger { color: var(--coral); border-color: rgba(153,60,29,0.4); }
+  button.btn.small { padding: 5px 10px; font-size: 13px; }
+  input, select {
+    font-family: var(--font); font-size: 14px; padding: 7px 9px;
+    border: 0.5px solid var(--border-strong); border-radius: 6px; background: var(--surface); color: var(--text);
+    height: 34px;
+  }
+  input:focus, select:focus { outline: 2px solid var(--blue-bg); outline-offset: 0; border-color: var(--blue); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 8px; border-bottom: 0.5px solid var(--border); }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-3); font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  .pill {
+    display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: 500;
+  }
+  .pill.teal { background: var(--teal-bg); color: var(--teal); }
+  .pill.coral { background: var(--coral-bg); color: var(--coral); }
+  .pill.amber { background: var(--amber-bg); color: var(--amber); }
+  .pill.blue { background: var(--blue-bg); color: var(--blue); }
+  .pill.gray { background: var(--surface-2); color: var(--text-2); }
+  .pos-select-row { display: flex; gap: 6px; align-items: center; }
+  .pos-select-row select { height: 32px; font-size: 13px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 12px; }
+  .metric { background: var(--surface-2); border-radius: var(--radius); padding: 12px 14px; }
+  .metric .lbl { font-size: 12px; color: var(--text-2); }
+  .metric .val { font-size: 22px; font-weight: 600; margin-top: 2px; }
+  .lineup-grid { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .lineup-grid th, .lineup-grid td { border: 0.5px solid var(--border); padding: 6px 6px; text-align: center; }
+  .lineup-grid th { background: var(--surface-2); }
+  .lineup-grid td.name { text-align: left; font-weight: 500; white-space: nowrap; }
+  .lineup-grid td.bench { background: var(--coral-bg); color: var(--coral); font-weight: 600; }
+  .lineup-grid td.pos { background: var(--teal-bg); color: var(--teal); font-weight: 600; }
+  .empty { color: var(--text-3); font-style: italic; padding: 20px; text-align: center; }
+  .flex-between { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .bal-bar { height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+  .bal-bar > div { height: 100%; background: var(--teal); }
+  .warn { color: var(--coral); font-weight: 500; }
+  .file-drop { border: 1px dashed var(--border-strong); border-radius: var(--radius); padding: 16px; text-align: center; color: var(--text-2); font-size: 13px; }
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--text); color: #fff; padding: 10px 18px; border-radius: var(--radius);
+    font-size: 14px; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 100;
+  }
+  .toast.show { opacity: 1; }
+  .muted-row td { color: var(--text-3); }
+  @media (max-width: 640px) {
+    .lineup-grid { font-size: 11px; }
+    .lineup-grid th, .lineup-grid td { padding: 4px 3px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app">
+    <div>
+      <h1><i class="ti ti-bolt bolt"></i> Nebraska Storm — Lineup Manager</h1>
+      <div class="sub">12-player roster · 9 field positions · 3 on the bench each inning · fair rotation tracking</div>
+    </div>
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="roster">Roster</button>
+      <button class="tab" data-tab="lineup">Build Lineup</button>
+      <button class="tab" data-tab="time">Playing Time</button>
+      <button class="tab" data-tab="stats">Stats</button>
+    </div>
+  </header>
+
+  <!-- ROSTER -->
+  <div class="panel active" id="panel-roster">
+    <div class="card">
+      <div class="flex-between">
+        <div>
+          <h2>Roster &amp; positions</h2>
+          <p class="hint">Each player gets a primary position and two secondary options. The lineup builder uses these to assign fielding spots.</p>
+        </div>
+        <button class="btn primary" id="addPlayerBtn"><span>+ Add player</span></button>
+      </div>
+      <div id="rosterTableWrap"></div>
+    </div>
+    <div class="card">
+      <h2>Position key</h2>
+      <p class="hint" id="posKey"></p>
+    </div>
+  </div>
+
+  <!-- BUILD LINEUP -->
+  <div class="panel" id="panel-lineup">
+    <div class="card">
+      <h2>Generate a game lineup</h2>
+      <p class="hint">Select who's available, set innings, and generate. Players sit based on who has the <strong>least</strong> bench time so far this season, so it evens out. You can manually swap any assignment before saving.</p>
+      <div class="flex-between" style="margin-bottom:14px;">
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <label style="font-size:13px; color:var(--text-2);">Innings</label>
+          <select id="inningCount">
+            <option value="5">5</option>
+            <option value="6" selected>6</option>
+            <option value="7">7</option>
+          </select>
+          <label style="font-size:13px; color:var(--text-2); margin-left:8px;">Date</label>
+          <input type="date" id="gameDate" style="width:150px;">
+          <label style="font-size:13px; color:var(--text-2); margin-left:8px;">Opponent</label>
+          <input id="oppName" placeholder="e.g. Eagles" style="width:130px;">
+        </div>
+        <button class="btn primary" id="genBtn">Generate lineup</button>
+      </div>
+      <div id="availList" style="margin-bottom:14px;"></div>
+      <div id="lineupResult"></div>
+      <div id="lineupActions" style="margin-top:14px; display:none;">
+        <button class="btn primary" id="saveGameBtn">Save game &amp; log playing time</button>
+        <button class="btn" id="regenBtn">Re-generate</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLAYING TIME -->
+  <div class="panel" id="panel-time">
+    <div class="card">
+      <div class="flex-between">
+        <div>
+          <h2>Season playing time</h2>
+          <p class="hint">Cumulative innings in the field vs. on the bench. The balance bar flags anyone drifting from the team average.</p>
+        </div>
+        <button class="btn danger small" id="resetSeasonBtn">Reset season</button>
+      </div>
+      <div class="grid-2" id="timeMetrics" style="margin-bottom:16px;"></div>
+      <div id="timeTableWrap"></div>
+    </div>
+    <div class="card">
+      <h2>Game log</h2>
+      <div id="gameLogWrap"></div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="panel" id="panel-stats">
+    <div class="card">
+      <div class="flex-between">
+        <div>
+          <h2>Player stats</h2>
+          <p class="hint">Track batting and fielding numbers to inform lineup decisions. Enter manually or upload a CSV.</p>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn small" id="uploadStatsBtn">Upload CSV</button>
+          <button class="btn small" id="downloadStatsBtn">Export CSV</button>
+        </div>
+      </div>
+      <input type="file" id="statsFile" accept=".csv" style="display:none;">
+      <div id="statsTableWrap"></div>
+      <p class="hint" style="margin-top:12px;">CSV columns: <code>name, AB, H, R, RBI, BB, K, errors</code>. Matching is by player name. AVG and OBP calculate automatically.</p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const POSITIONS = ["P","C","1B","2B","3B","SS","LF","CF","RF"];
+const POS_NAMES = {P:"Pitcher",C:"Catcher","1B":"First base","2B":"Second base","3B":"Third base",SS:"Shortstop",LF:"Left field",CF:"Center field",RF:"Right field"};
+const FIELD_SLOTS = 9;
+
+let state = { players: [], games: [] };
+let currentLineup = null;
+
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1900); }
+
+async function load(){
+  try {
+    const r = await window.storage.get('softball_state');
+    if(r && r.value){ state = JSON.parse(r.value); }
+  } catch(e){ /* first run, no data */ }
+  if(!state.players) state.players=[];
+  if(!state.games) state.games=[];
+  // migrate older saved data: ensure new fields exist
+  state.players.forEach(p=>{
+    if(p.sec3===undefined) p.sec3 = '1B';
+    if(p.inningsPitch===undefined) p.inningsPitch = 0;
+    if(!p.stats) p.stats = {AB:0,H:0,R:0,RBI:0,BB:0,K:0,errors:0};
+  });
+  if(state.players.length===0) seedRoster();
+  renderAll();
+}
+async function save(){
+  try { await window.storage.set('softball_state', JSON.stringify(state)); }
+  catch(e){ toast('Could not save'); }
+}
+
+function seedRoster(){
+  const names = ["Player 1","Player 2","Player 3","Player 4","Player 5","Player 6","Player 7","Player 8","Player 9","Player 10","Player 11","Player 12"];
+  const prim = ["P","C","1B","2B","3B","SS","LF","CF","RF","SS","2B","C"];
+  state.players = names.map((n,i)=>({
+    id: uid(), name:n,
+    primary: prim[i],
+    sec1: POSITIONS[(POSITIONS.indexOf(prim[i])+1)%9],
+    sec2: POSITIONS[(POSITIONS.indexOf(prim[i])+2)%9],
+    sec3: POSITIONS[(POSITIONS.indexOf(prim[i])+3)%9],
+    inningsField:0, inningsBench:0, inningsPitch:0,
+    stats:{AB:0,H:0,R:0,RBI:0,BB:0,K:0,errors:0}
+  }));
+}
+
+/* ---------- ROSTER ---------- */
+function posSelect(val, cls){
+  return `<select class="${cls}" style="width:80px;">`+
+    POSITIONS.map(p=>`<option value="${p}" ${p===val?'selected':''}>${p}</option>`).join('')+
+    `</select>`;
+}
+function renderRoster(){
+  const wrap = document.getElementById('rosterTableWrap');
+  if(state.players.length===0){ wrap.innerHTML='<div class="empty">No players yet. Add your first player.</div>'; return; }
+  let html = `<table><thead><tr><th>#</th><th>Name</th><th>Primary</th><th>Secondary 1</th><th>Secondary 2</th><th>Secondary 3</th><th></th></tr></thead><tbody>`;
+  state.players.forEach((p,i)=>{
+    html += `<tr data-id="${p.id}">
+      <td>${i+1}</td>
+      <td><input class="r-name" value="${escapeHtml(p.name)}" style="width:150px;"></td>
+      <td>${posSelect(p.primary,'r-primary')}</td>
+      <td>${posSelect(p.sec1,'r-sec1')}</td>
+      <td>${posSelect(p.sec2,'r-sec2')}</td>
+      <td>${posSelect(p.sec3,'r-sec3')}</td>
+      <td><button class="btn danger small r-del">Remove</button></td>
+    </tr>`;
+  });
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+  wrap.querySelectorAll('tr[data-id]').forEach(tr=>{
+    const id = tr.dataset.id;
+    const p = state.players.find(x=>x.id===id);
+    tr.querySelector('.r-name').addEventListener('change',e=>{p.name=e.target.value; save(); renderTime(); renderStats();});
+    tr.querySelector('.r-primary').addEventListener('change',e=>{p.primary=e.target.value; save();});
+    tr.querySelector('.r-sec1').addEventListener('change',e=>{p.sec1=e.target.value; save();});
+    tr.querySelector('.r-sec2').addEventListener('change',e=>{p.sec2=e.target.value; save();});
+    tr.querySelector('.r-sec3').addEventListener('change',e=>{p.sec3=e.target.value; save();});
+    tr.querySelector('.r-del').addEventListener('click',()=>{
+      if(confirm('Remove '+p.name+'?')){ state.players=state.players.filter(x=>x.id!==id); save(); renderAll(); }
+    });
+  });
+  document.getElementById('posKey').innerHTML = POSITIONS.map(p=>`<span class="pill gray" style="margin:2px;">${p} — ${POS_NAMES[p]}</span>`).join(' ');
+}
+
+/* ---------- LINEUP BUILDER ---------- */
+function renderAvailList(){
+  const wrap = document.getElementById('availList');
+  if(state.players.length===0){ wrap.innerHTML='<div class="empty">Add players on the Roster tab first.</div>'; return; }
+  let html = `<div style="font-size:13px; color:var(--text-2); margin-bottom:6px;">Available players (uncheck anyone absent):</div><div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:14px;">`;
+  state.players.forEach(p=>{
+    html += `<label style="display:flex; align-items:center; gap:5px; font-size:14px; background:var(--surface-2); padding:5px 10px; border-radius:6px; cursor:pointer;">
+      <input type="checkbox" class="avail-cb" data-id="${p.id}" checked style="height:auto;"> ${escapeHtml(p.name)}</label>`;
+  });
+  html += `</div>`;
+  // starting pitcher selector — defaults to whoever lists P as primary
+  const pitcherCandidates = [...state.players].sort((a,b)=>{
+    const aP=(a.primary==='P'?0:a.sec1==='P'||a.sec2==='P'?1:2);
+    const bP=(b.primary==='P'?0:b.sec1==='P'||b.sec2==='P'?1:2);
+    return aP-bP;
+  });
+  html += `<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <label style="font-size:13px; color:var(--text-2);"><i class="ti ti-ball-baseball"></i> Starting pitcher</label>
+    <select id="starterPitcher" style="min-width:150px;">`;
+  pitcherCandidates.forEach(p=>{
+    const tag = p.primary==='P'?' (P)':(p.sec1==='P'||p.sec2==='P'?' (P opt)':'');
+    html += `<option value="${p.id}">${escapeHtml(p.name)}${tag}</option>`;
+  });
+  html += `</select>
+    <span style="font-size:12px; color:var(--text-3);">She's locked in the field and won't be benched while pitching. Change relief inning-by-inning after generating.</span>
+  </div>`;
+  wrap.innerHTML = html;
+  const dateEl = document.getElementById('gameDate');
+  if(dateEl && !dateEl.value){ dateEl.value = new Date().toISOString().slice(0,10); }
+}
+
+function generateLineup(){
+  const innings = parseInt(document.getElementById('inningCount').value);
+  const availIds = [...document.querySelectorAll('.avail-cb:checked')].map(c=>c.dataset.id);
+  const avail = state.players.filter(p=>availIds.includes(p.id));
+  if(avail.length < FIELD_SLOTS){ toast('Need at least 9 available players'); return; }
+
+  const starterId = document.getElementById('starterPitcher').value;
+  // pitchers[inn] = id of whoever is pitching that inning. Starts as the chosen starter
+  // for every inning; you change it inline per inning to mark relief.
+  const pitchers = new Array(innings).fill(starterId || avail[0].id);
+
+  const lineup = buildLineup(avail, innings, pitchers);
+  currentLineup = { innings, availIds, lineup, pitchers,
+    opp: document.getElementById('oppName').value.trim(),
+    date: document.getElementById('gameDate').value };
+  renderLineupResult();
+  document.getElementById('lineupActions').style.display='block';
+}
+
+// Core builder. The pitcher each inning is exempt from sitting and locked at P.
+// Bench rotation runs only on the non-pitchers, seeded by season bench totals.
+function buildLineup(avail, innings, pitchers){
+  const benchTally = {};
+  avail.forEach(p=> benchTally[p.id] = p.inningsBench);
+
+  const lineup = [];
+  for(let inn=0; inn<innings; inn++){
+    const pitcherId = pitchers[inn];
+    const sitCount = avail.length - FIELD_SLOTS;
+    // eligible to sit = everyone except the current pitcher
+    const eligible = avail.filter(p=>p.id!==pitcherId);
+    const sorted = [...eligible].sort((a,b)=>{
+      if(benchTally[a.id] !== benchTally[b.id]) return benchTally[a.id]-benchTally[b.id];
+      return Math.random()-0.5;
+    });
+    const benchIds = sorted.slice(0, sitCount).map(p=>p.id);
+    benchIds.forEach(id=> benchTally[id] += 1);
+    const fielders = avail.filter(p=>!benchIds.includes(p.id));
+    const assignments = assignPositions(fielders, pitcherId);
+    lineup.push({ assignments, bench: benchIds, pitcher: pitcherId });
+  }
+  return lineup;
+}
+
+// assign fielders to positions; the pitcher is pinned to P first, then
+// everyone else fills honoring primary > sec1 > sec2, greedy with conflict resolution
+function assignPositions(fielders, pitcherId){
+  const assignment = {}; // pos -> id
+  let unassigned = [...fielders];
+
+  if(pitcherId){
+    assignment['P'] = pitcherId;
+    unassigned = unassigned.filter(p=>p.id!==pitcherId);
+  }
+  for(const tier of ['primary','sec1','sec2','sec3']){
+    for(const p of [...unassigned]){
+      const pos = p[tier];
+      if(!assignment[pos]){
+        assignment[pos] = p.id;
+        unassigned.splice(unassigned.indexOf(p),1);
+      }
+    }
+  }
+  const openPositions = POSITIONS.filter(pos=>!assignment[pos]);
+  unassigned.forEach((p,i)=>{ if(openPositions[i]) assignment[openPositions[i]] = p.id; });
+  return assignment;
+}
+
+function nameById(id){ const p=state.players.find(x=>x.id===id); return p?p.name:'?'; }
+
+function renderLineupResult(){
+  const wrap = document.getElementById('lineupResult');
+  if(!currentLineup){ wrap.innerHTML=''; return; }
+  const {innings, lineup, availIds, pitchers} = currentLineup;
+  const avail = state.players.filter(p=>availIds.includes(p.id));
+
+  // Editable pitcher row
+  let html = `<div style="background:var(--purple-bg); border-radius:var(--radius); padding:10px 12px; margin-bottom:14px;">
+    <div style="font-size:13px; font-weight:600; color:var(--purple); margin-bottom:8px;"><i class="ti ti-ball-baseball"></i> Pitcher by inning <span style="font-weight:400; color:var(--text-2);">— change any inning to mark a relief pitcher (applies from that inning on)</span></div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">`;
+  for(let i=0;i<innings;i++){
+    html += `<div style="display:flex; flex-direction:column; gap:3px;">
+      <span style="font-size:11px; color:var(--text-2); text-align:center;">Inn ${i+1}${i>0&&pitchers[i]!==pitchers[i-1]?' ⟲':''}</span>
+      <select class="pitcher-sel" data-inn="${i}" style="height:32px; font-size:13px; min-width:120px;">`;
+    avail.forEach(p=>{
+      html += `<option value="${p.id}" ${p.id===pitchers[i]?'selected':''}>${escapeHtml(p.name)}</option>`;
+    });
+    html += `</select></div>`;
+  }
+  html += `</div></div>`;
+
+  // Player x inning grid
+  html += `<div style="overflow-x:auto;"><table class="lineup-grid"><thead><tr><th style="text-align:left;">Player</th>`;
+  for(let i=0;i<innings;i++) html+=`<th>Inn ${i+1}</th>`;
+  html += `<th>Field</th><th>Bench</th></tr></thead><tbody>`;
+
+  avail.forEach(p=>{
+    html += `<tr><td class="name">${escapeHtml(p.name)}</td>`;
+    let benchCount=0, fieldCount=0;
+    for(let i=0;i<innings;i++){
+      const inn = lineup[i];
+      const onBench = inn.bench.includes(p.id);
+      const pos = onBench ? 'BENCH' : (Object.keys(inn.assignments).find(k=>inn.assignments[k]===p.id) || '-');
+      const isP = pos==='P';
+      // listed positions for this player, to mark non-listed overrides
+      const listed = [p.primary,p.sec1,p.sec2,p.sec3];
+      const offList = pos!=='BENCH' && pos!=='-' && !listed.includes(pos);
+      let cellStyle = onBench ? 'background:var(--coral-bg);' : (isP ? 'background:var(--purple-bg);' : 'background:var(--teal-bg);');
+      if(offList) cellStyle = 'background:#fff7d6; outline:1.5px solid var(--storm-gold);';
+      html += `<td style="padding:2px;">
+        <select class="assign-sel" data-pid="${p.id}" data-inn="${i}" style="height:30px; font-size:12px; width:100%; min-width:78px; ${cellStyle} font-weight:600; border:none;">
+          <option value="BENCH" ${pos==='BENCH'?'selected':''}>BENCH</option>`;
+      POSITIONS.forEach(pos2=>{
+        const star = !listed.includes(pos2) ? '•' : '';
+        html += `<option value="${pos2}" ${pos===pos2?'selected':''}>${pos2}${star}</option>`;
+      });
+      html += `</select></td>`;
+      if(onBench) benchCount++; else fieldCount++;
+    }
+    html += `<td>${fieldCount}</td><td>${benchCount}</td></tr>`;
+  });
+  html += `</tbody></table></div>`;
+  html += `<div style="font-size:12px; color:var(--text-3); margin-top:6px;">Each cell is editable — pick any position to override. A gold-outlined cell with • means it's outside that player's listed positions. Swaps are automatic.</div>`;
+
+  html += `<div style="margin-top:14px; font-size:13px; color:var(--text-2);">Bench by inning: `;
+  html += lineup.map((inn,i)=>`Inn ${i+1}: ${inn.bench.map(nameById).join(', ')||'—'}`).join(' · ');
+  html += `</div>`;
+  wrap.innerHTML = html;
+
+  // wire pitcher changes: setting inning i applies that pitcher from i forward,
+  // then re-runs bench rotation so it stays fair around the new pitcher
+  wrap.querySelectorAll('.pitcher-sel').forEach(sel=>{
+    sel.addEventListener('change',e=>{
+      const inn = parseInt(e.target.dataset.inn);
+      const newId = e.target.value;
+      for(let i=inn;i<currentLineup.innings;i++) currentLineup.pitchers[i]=newId;
+      const av = state.players.filter(p=>currentLineup.availIds.includes(p.id));
+      currentLineup.lineup = buildLineup(av, currentLineup.innings, currentLineup.pitchers);
+      renderLineupResult();
+    });
+  });
+
+  // wire manual position overrides
+  wrap.querySelectorAll('.assign-sel').forEach(sel=>{
+    sel.addEventListener('change',e=>{
+      applyOverride(parseInt(e.target.dataset.inn), e.target.dataset.pid, e.target.value);
+    });
+  });
+}
+
+// Manually place `pid` at `newPos` (or BENCH) in inning `inn`, swapping cleanly.
+function applyOverride(inn, pid, newPos){
+  const L = currentLineup.lineup[inn];
+  const assignments = L.assignments;
+  const bench = L.bench;
+
+  // where is pid now?
+  const oldPos = Object.keys(assignments).find(k=>assignments[k]===pid);
+  const wasOnBench = bench.includes(pid);
+
+  if(newPos === 'BENCH'){
+    // move pid to bench; whoever we displace nothing — but bench size must stay fixed,
+    // so pull the longest-benched non-pitcher onto the field into pid's old spot
+    if(wasOnBench) return; // already benched
+    if(oldPos){ delete assignments[oldPos]; }
+    bench.push(pid);
+    // promote someone off the bench to keep 9 fielders: pick lowest season bench tally
+    const candidates = bench.filter(id=>id!==pid && id!==L.pitcher);
+    if(candidates.length && oldPos){
+      candidates.sort((a,b)=>{
+        const pa=state.players.find(x=>x.id===a), pb=state.players.find(x=>x.id===b);
+        return pa.inningsBench-pb.inningsBench;
+      });
+      const promote = candidates[0];
+      bench.splice(bench.indexOf(promote),1);
+      assignments[oldPos] = promote;
+    }
+    renderLineupResult();
+    return;
+  }
+
+  // newPos is a field position. Who currently holds it?
+  const occupant = assignments[newPos];
+
+  if(occupant === pid) return; // no change
+
+  if(wasOnBench){
+    // pid comes off the bench into newPos; displaced occupant (if any) goes to bench
+    bench.splice(bench.indexOf(pid),1);
+    if(occupant){ bench.push(occupant); }
+    assignments[newPos] = pid;
+  } else {
+    // pid was on the field at oldPos. Swap with occupant (or just move if empty).
+    if(occupant){
+      assignments[oldPos] = occupant; // occupant takes pid's old spot
+    } else {
+      delete assignments[oldPos];
+    }
+    assignments[newPos] = pid;
+  }
+  renderLineupResult();
+}
+
+function saveGame(){
+  if(!currentLineup) return;
+  const {innings, lineup, availIds, opp, pitchers, date} = currentLineup;
+  // tally field/bench/pitch innings
+  const delta = {};
+  availIds.forEach(id=> delta[id]={field:0,bench:0,pitch:0});
+  lineup.forEach(inn=>{
+    inn.bench.forEach(id=> delta[id].bench++);
+    Object.values(inn.assignments).forEach(id=>{ if(delta[id]) delta[id].field++; });
+    if(delta[inn.pitcher]) delta[inn.pitcher].pitch++;
+  });
+  availIds.forEach(id=>{
+    const p = state.players.find(x=>x.id===id);
+    p.inningsField += delta[id].field;
+    p.inningsBench += delta[id].bench;
+    p.inningsPitch = (p.inningsPitch||0) + delta[id].pitch;
+  });
+  state.games.push({
+    id: uid(), date: date || new Date().toISOString().slice(0,10),
+    opp: opp||'TBD', innings, delta,
+    pitchers: pitchers.slice(),
+    benchByInning: lineup.map(inn=>inn.bench.slice())
+  });
+  save();
+  currentLineup=null;
+  document.getElementById('lineupResult').innerHTML='';
+  document.getElementById('lineupActions').style.display='none';
+  document.getElementById('oppName').value='';
+  document.getElementById('gameDate').value = new Date().toISOString().slice(0,10);
+  toast('Game saved — playing time updated');
+  renderTime();
+  setTab('time');
+}
+
+/* ---------- PLAYING TIME ---------- */
+function renderTime(){
+  const wrap = document.getElementById('timeTableWrap');
+  const metrics = document.getElementById('timeMetrics');
+  if(state.players.length===0){ wrap.innerHTML='<div class="empty">No players.</div>'; metrics.innerHTML=''; return; }
+
+  const totalGames = state.games.length;
+  const benchVals = state.players.map(p=>p.inningsBench);
+  const avgBench = benchVals.reduce((a,b)=>a+b,0)/state.players.length;
+  const maxBench = Math.max(...benchVals,0);
+
+  metrics.innerHTML = `
+    <div class="metric"><div class="lbl">Games logged</div><div class="val">${totalGames}</div></div>
+    <div class="metric"><div class="lbl">Avg bench innings / player</div><div class="val">${avgBench.toFixed(1)}</div></div>
+    <div class="metric"><div class="lbl">Most benched</div><div class="val">${maxBench}</div></div>`;
+
+  const sorted = [...state.players].sort((a,b)=>b.inningsBench-a.inningsBench);
+  let html = `<table><thead><tr><th>Player</th><th>Field innings</th><th>Pitch innings</th><th>Bench innings</th><th>Total</th><th>Balance vs avg</th></tr></thead><tbody>`;
+  sorted.forEach(p=>{
+    const total = p.inningsField+p.inningsBench;
+    const diff = p.inningsBench - avgBench;
+    const pct = maxBench>0 ? Math.round(p.inningsBench/maxBench*100) : 0;
+    let flag='';
+    if(diff >= 2) flag=`<span class="pill coral">+${diff.toFixed(1)} over</span>`;
+    else if(diff <= -2) flag=`<span class="pill teal">${diff.toFixed(1)} under</span>`;
+    else flag=`<span class="pill gray">even</span>`;
+    const pitch = p.inningsPitch||0;
+    html += `<tr>
+      <td style="font-weight:500;">${escapeHtml(p.name)}</td>
+      <td>${p.inningsField}</td>
+      <td>${pitch>0?`<span class="pill purple" style="background:var(--purple-bg); color:var(--purple);">${pitch}</span>`:'—'}</td>
+      <td>${p.inningsBench}</td>
+      <td>${total}</td>
+      <td><div style="display:flex; align-items:center; gap:8px;"><div class="bal-bar" style="flex:1; max-width:120px;"><div style="width:${pct}%"></div></div>${flag}</div></td>
+    </tr>`;
+  });
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+  renderGameLog();
+}
+
+function renderGameLog(){
+  const wrap = document.getElementById('gameLogWrap');
+  if(state.games.length===0){ wrap.innerHTML='<div class="empty">No games logged yet.</div>'; return; }
+  let html = `<table><thead><tr><th>Date</th><th>Opponent</th><th>Innings</th><th>Pitched</th><th>Sat out</th><th></th></tr></thead><tbody>`;
+  [...state.games].reverse().forEach(g=>{
+    const sitters = {};
+    g.benchByInning.flat().forEach(id=>{ sitters[id]=(sitters[id]||0)+1; });
+    const sitStr = Object.entries(sitters).map(([id,c])=>`${nameById(id)} (${c})`).join(', ');
+    // pitchers: collapse consecutive innings into "Name (innings)"
+    let pitchStr = '—';
+    if(g.pitchers){
+      const counts = {};
+      g.pitchers.forEach(id=>{ counts[id]=(counts[id]||0)+1; });
+      pitchStr = Object.entries(counts).map(([id,c])=>`${nameById(id)} (${c})`).join(', ');
+    }
+    html += `<tr data-gid="${g.id}">
+      <td>${g.date}</td><td>${escapeHtml(g.opp)}</td><td>${g.innings}</td>
+      <td style="font-size:13px; color:var(--text-2);">${pitchStr}</td>
+      <td style="font-size:13px; color:var(--text-2);">${sitStr}</td>
+      <td><button class="btn danger small g-del">Undo</button></td>
+    </tr>`;
+  });
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+  wrap.querySelectorAll('.g-del').forEach(b=>{
+    b.addEventListener('click',e=>{
+      const gid = e.target.closest('tr').dataset.gid;
+      const g = state.games.find(x=>x.id===gid);
+      if(g && confirm('Undo this game and reverse its playing time?')){
+        Object.entries(g.delta).forEach(([id,d])=>{
+          const p=state.players.find(x=>x.id===id);
+          if(p){ p.inningsField-=d.field; p.inningsBench-=d.bench; p.inningsPitch=(p.inningsPitch||0)-(d.pitch||0); }
+        });
+        state.games = state.games.filter(x=>x.id!==gid);
+        save(); renderTime();
+      }
+    });
+  });
+}
+
+/* ---------- STATS ---------- */
+function renderStats(){
+  const wrap = document.getElementById('statsTableWrap');
+  if(state.players.length===0){ wrap.innerHTML='<div class="empty">No players.</div>'; return; }
+  let html = `<div style="overflow-x:auto;"><table><thead><tr>
+    <th>Player</th><th>AB</th><th>H</th><th>AVG</th><th>OBP</th><th>R</th><th>RBI</th><th>BB</th><th>K</th><th>Err</th></tr></thead><tbody>`;
+  state.players.forEach(p=>{
+    const s=p.stats;
+    const avg = s.AB>0 ? (s.H/s.AB).toFixed(3).replace(/^0/,'') : '.000';
+    const obDen = s.AB+s.BB;
+    const obp = obDen>0 ? ((s.H+s.BB)/obDen).toFixed(3).replace(/^0/,'') : '.000';
+    html += `<tr data-id="${p.id}">
+      <td style="font-weight:500; white-space:nowrap;">${escapeHtml(p.name)}</td>
+      ${statCell(p.id,'AB',s.AB)}
+      ${statCell(p.id,'H',s.H)}
+      <td>${avg}</td><td>${obp}</td>
+      ${statCell(p.id,'R',s.R)}
+      ${statCell(p.id,'RBI',s.RBI)}
+      ${statCell(p.id,'BB',s.BB)}
+      ${statCell(p.id,'K',s.K)}
+      ${statCell(p.id,'errors',s.errors)}
+    </tr>`;
+  });
+  html += `</tbody></table></div>`;
+  wrap.innerHTML = html;
+  wrap.querySelectorAll('.stat-in').forEach(inp=>{
+    inp.addEventListener('change',e=>{
+      const id=e.target.dataset.id, key=e.target.dataset.key;
+      const p=state.players.find(x=>x.id===id);
+      p.stats[key]=parseInt(e.target.value)||0;
+      save(); renderStats();
+    });
+  });
+}
+function statCell(id,key,val){
+  return `<td><input class="stat-in" data-id="${id}" data-key="${key}" type="number" min="0" value="${val}" style="width:54px; height:30px; padding:4px 6px;"></td>`;
+}
+
+function uploadStats(file){
+  const reader = new FileReader();
+  reader.onload = e=>{
+    const lines = e.target.result.split(/\r?\n/).filter(l=>l.trim());
+    if(lines.length<2){ toast('CSV looks empty'); return; }
+    const headers = lines[0].split(',').map(h=>h.trim().toLowerCase());
+    const idx = {};
+    ['name','ab','h','r','rbi','bb','k','errors'].forEach(k=> idx[k]=headers.indexOf(k));
+    let matched=0;
+    for(let i=1;i<lines.length;i++){
+      const cols = lines[i].split(',');
+      const nm = (cols[idx.name]||'').trim().toLowerCase();
+      const p = state.players.find(x=>x.name.toLowerCase()===nm);
+      if(!p) continue;
+      matched++;
+      const g=(k)=> idx[k]>=0 ? (parseInt(cols[idx[k]])||0) : p.stats[k.toUpperCase()]||0;
+      p.stats = {
+        AB: idx.ab>=0?parseInt(cols[idx.ab])||0:p.stats.AB,
+        H: idx.h>=0?parseInt(cols[idx.h])||0:p.stats.H,
+        R: idx.r>=0?parseInt(cols[idx.r])||0:p.stats.R,
+        RBI: idx.rbi>=0?parseInt(cols[idx.rbi])||0:p.stats.RBI,
+        BB: idx.bb>=0?parseInt(cols[idx.bb])||0:p.stats.BB,
+        K: idx.k>=0?parseInt(cols[idx.k])||0:p.stats.K,
+        errors: idx.errors>=0?parseInt(cols[idx.errors])||0:p.stats.errors
+      };
+    }
+    save(); renderStats();
+    toast(matched+' player(s) updated from CSV');
+  };
+  reader.readAsText(file);
+}
+function downloadStats(){
+  let csv='name,AB,H,R,RBI,BB,K,errors\n';
+  state.players.forEach(p=>{ const s=p.stats;
+    csv+=`${p.name},${s.AB},${s.H},${s.R},${s.RBI},${s.BB},${s.K},${s.errors}\n`; });
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='team-stats.csv'; a.click();
+}
+
+/* ---------- HELPERS / WIRING ---------- */
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function renderAll(){ renderRoster(); renderAvailList(); renderTime(); renderStats(); }
+function setTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+name));
+  if(name==='lineup') renderAvailList();
+  if(name==='time') renderTime();
+}
+
+document.getElementById('tabs').addEventListener('click',e=>{
+  if(e.target.classList.contains('tab')) setTab(e.target.dataset.tab);
+});
+document.getElementById('addPlayerBtn').addEventListener('click',()=>{
+  state.players.push({id:uid(),name:'New player',primary:'P',sec1:'C',sec2:'1B',sec3:'2B',inningsField:0,inningsBench:0,inningsPitch:0,stats:{AB:0,H:0,R:0,RBI:0,BB:0,K:0,errors:0}});
+  save(); renderRoster();
+});
+document.getElementById('genBtn').addEventListener('click',generateLineup);
+document.getElementById('regenBtn').addEventListener('click',generateLineup);
+document.getElementById('saveGameBtn').addEventListener('click',saveGame);
+document.getElementById('resetSeasonBtn').addEventListener('click',()=>{
+  if(confirm('Reset all playing time and game log? Roster and stats stay.')){
+    state.players.forEach(p=>{p.inningsField=0;p.inningsBench=0;p.inningsPitch=0;});
+    state.games=[]; save(); renderTime(); toast('Season reset');
+  }
+});
+document.getElementById('uploadStatsBtn').addEventListener('click',()=>document.getElementById('statsFile').click());
+document.getElementById('statsFile').addEventListener('change',e=>{ if(e.target.files[0]) uploadStats(e.target.files[0]); e.target.value=''; });
+document.getElementById('downloadStatsBtn').addEventListener('click',downloadStats);
+
+load();
+</script>
+</body>
+</html>
